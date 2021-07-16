@@ -20,9 +20,12 @@ class variables_storage:
 
 class pipeline:
 
-    def __init__(self):
+    def __init__(self, env):
         with open("pipeline/pipelines_conf.yml") as file:
-            self.confs = yaml.load(file, Loader=SafeLoader)
+            confs = yaml.load(file, Loader=SafeLoader)
+            self.flows = confs["flows"]
+            self.confs = confs["confs"]
+            self.confs["active_env"] = env
         self.variables = variables_storage()
 
     def _make_step(self,step_name, step):
@@ -32,13 +35,13 @@ class pipeline:
             else:
                 variables = None
             func = import_module(f"pipeline.{step_name}.{process_name}")
-            exit_vars = func.process(variables)
+            exit_vars = func.process(confs = self.confs, args = variables)
             if "out_variables" in process.keys():
                 variables = {process["out_variables"][x] : exit_vars[x] for x in range(len(process["out_variables"]))}
                 self.variables.store_vars(variables)
 
     def run_tag(self, tag):
-        for _,flow in self.confs["flows"].items():
+        for _,flow in self.flows.items():
             if not tag in flow["tags"]:
                 continue
             for step_name, step in flow["steps"].items():

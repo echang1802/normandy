@@ -2,6 +2,7 @@
 flows:
   main:
     tags:
+      - default
       - all
     steps:
       read:
@@ -12,3 +13,16 @@ flows:
         process_data:
           in_variables:
             - main_df
+
+confs:
+  envs:
+    dev:
+      read:
+        raw_dev
+      write:
+        processed_dev
+    prod:
+      read:
+        raw
+      write:
+        processed
