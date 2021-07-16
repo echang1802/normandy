@@ -13,6 +13,20 @@ flows:
         process_data:
           in_variables:
             - main_df
+  add_info:
+    tags:
+      - add_info
+      - all
+    steps:
+      read:
+        read_file:
+          out_variables:
+            - main_df
+      process:
+        add_data:
+          in_variables:
+            - main_df
+
 
 confs:
   envs:
