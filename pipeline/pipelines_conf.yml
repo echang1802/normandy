@@ -1,0 +1,14 @@
+
+flows:
+  main:
+    tags:
+      - all
+    steps:
+      read:
+        read_file:
+          out_variables:
+            - main_df
+      process:
+        process_data:
+          in_variables:
+            - main_df
