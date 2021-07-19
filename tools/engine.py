@@ -13,30 +13,83 @@ def _info(title, _t):
 class variables_storage:
 
     def __init__(self):
-        self.variables = {}
+        self.__variables__ = {}
 
     def store_vars(self, variables):
         for name, var in variables.items():
-            self._store(name, var)
+            self.__store__(name, var)
 
-    def _store(self, name, var):
-        self.variables[name] = var
+    def __store__(self, name, var):
+        self.__variables__[name] = var
 
     def get(self, variables):
-        return [self.variables[var] for var in variables]
+        return [self.__variables__[var] for var in variables]
 
 class flow:
 
     def __init__(self, flow_data, name):
-        self.__steps__ = flow_data["steps"]
         self.__tags__ = flow_data["tags"]
         self.__name__ = name
+        self.__steps__ = [step(data, step_name, self.__name__, self.__tags__) for step_name, data in flow_data["steps"].items()]
 
     def steps(self):
-        return self.__steps__.items()
+        return self.__steps__
+
+    def step_number(self):
+        return len(self.__steps__)
 
     def __str__(self):
         return f"Flow: {self.__name__}"
+
+class step:
+
+    def __init__(self, step_data, name, belong, tags):
+        self.__name__ = name
+        self.__from_flow__ = belong
+        self.__processes__ = [process(data, process_data, self.__name__, self.__from_flow__) for process_name, data in step_data.items() if (not "avoid_tags" in data.keys()) and (not tags.intersection(set(data["avoid_tags"])))]
+
+    def processes(self):
+        return self.__processes__
+
+    def processes_number(self):
+        return len(self.__processes__)
+
+    def __str__(self):
+        return f"Step from {self.__from_flow__} flow: {self.__name__}"
+
+setups_defaults = {
+    "in_variables": [],
+    "out_vriables" : [],
+    "error_tolerance" : False
+}
+
+class process:
+
+    def __init__(self, process_data, name, step_name, flow_name):
+        self.__data__ = process_data
+        self.__name__ = name
+        self.__from_step__ = step_name
+        self.__from_flow__ = flow_name
+        self.__in_variables__ = self.__setup__(process_data, "in_variables")
+        self.__out_variables__ = self.__setup__(process_data, "out_variables")
+        self.__error_tolerance__ = self.__setup__(process_data, "error_tolerance")
+
+    def __setup__(self, data, setup):
+        if setup in data.keys():
+            return data[setup]
+        return setups_defaults[setup]
+
+    def __import_module__(self):
+        self.module = import_module(f"pipeline.{self.__from_step__}.{self.__name__}")
+
+    def execute(self, pipeline):
+        try:
+            self.module.process(confs = pipeline.confs(), args = pipeline.variables())
+            # TODO: Use variables object!   <<<--------------------------------------------
+        except Exception as e:
+            if not self.__error_tolerance__:
+                raise step_error("Step exception without errors tolerance")
+            print(e)
 
 class pipeline:
 
@@ -44,42 +97,49 @@ class pipeline:
         tags = set(tags)
         with open("pipeline/pipelines_conf.yml") as file:
             confs = yaml.load(file, Loader=SafeLoader)
-            self.flows = [flow(data, flow_name) for flow_name, data in confs["flows"].items() if tags.intersection(set(data["tags"]))]
-            self.confs = confs["confs"]
-            self.confs["active_env"] = env
-        self.variables = variables_storage()
+            self.__flows__ = [flow(data, flow_name) for flow_name, data in confs["flows"].items() if tags.intersection(set(data["tags"]))]
+            self.__confs__ = confs["confs"]
+            self.__confs__["active_env"] = env
+        self.__variables__ = variables_storage()
 
-    def __take_step__(self, step_name, step):
-        for process_name, process in step.items():
-            # The process must be execute?
-            if "avoid_tags" in process.keys() and self.tags.intersection(set(process["avoid_tags"])):
-                continue
+    def confs(self):
+        return self.__confs__
 
-            # Step Confs
-            if "in_variables" in process.keys():
-                variables = self.variables.get(process["in_variables"])
-            else:
-                variables = None
-            error_tolerance = "error_tolerance" in process.keys() and process["error_tolerance"]
+    def variables(self):
+        return self.__variables__
 
-            # Process step
-            func = import_module(f"pipeline.{step_name}.{process_name}")
-            try:
-                exit_vars = func.process(confs = self.confs, args = variables)
-            except Exception as e:
-                if not error_tolerance:
-                    raise step_error("Step exception without errors tolerance")
-                print(e)
-            if "out_variables" in process.keys():
-                variables = {process["out_variables"][x] : exit_vars[x] for x in range(len(process["out_variables"]))}
-                self.variables.store_vars(variables)
+    def __step_runner__(self, step):
+        _t = datetime.now()
+        with Pool() as process_pool:
+            process_pool.map(self.__process_runner__, step.processes())
+        _info(step, _t)
+
+    def __process_runner__(self, process):
+        # Step Confs
+        if "in_variables" in process.keys():
+            variables = self.__variables__.get(process["in_variables"])
+        else:
+            variables = None
+        error_tolerance = "error_tolerance" in process.keys() and process["error_tolerance"]
+
+        # Process step
+        func = import_module(f"pipeline.{step_name}.{process_name}")
+        try:
+            exit_vars = func.process(confs = self.__confs__, args = variables)
+        except Exception as e:
+            if not error_tolerance:
+                raise step_error("Step exception without errors tolerance")
+            print(e)
+        if "out_variables" in process.keys():
+            variables = {process["out_variables"][x] : exit_vars[x] for x in range(len(process["out_variables"]))}
+            self.__variables__.store_vars(variables)
 
     def __flow_runner__(self, flow):
         _t = datetime.now()
-        for step_name, step in flow.steps():
-            self.__take_step__(step_name, step)
+        for step in flow.steps():
+            self.__step_runner__(step)
         _info(flow, _t)
 
     def start_pipeline(self):
-        with Pool(len(self.flows)) as pool:
-            pool.map(self.__flow_runner__, self.flows)
+        with Pool(len(self.__flows__)) as flow_pool:
+            flow_pool.map(self.__flow_runner__, self.__flows__)
