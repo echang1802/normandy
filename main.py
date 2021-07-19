@@ -10,6 +10,6 @@ if __name__ == "__main__":
 
     argv = arg_parser.parse_args()
 
-    pipe = pipeline(env = argv.env)
+    pipe = pipeline(env = argv.env, tags = argv.tags)
 
-    pipe.run_tag(argv.tags)
+    pipe.start_pipeline()

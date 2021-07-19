@@ -47,7 +47,6 @@ flows:
   error_treatment:
     tags:
       - errors
-      - all
     steps:
       read:
         read_file_with_err:
