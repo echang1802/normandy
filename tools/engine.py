@@ -1,7 +1,9 @@
 
+import sys
 import yaml
 from yaml.loader import SafeLoader
 from importlib import import_module
+from tools.engine_errors import step_error
 
 class variables_storage:
 
@@ -30,14 +32,25 @@ class pipeline:
 
     def _make_step(self, step_name, step, tags):
         for process_name, process in step.items():
+            # The process must be execute?
             if "avoid_tags" in process.keys() and tags.intersection(set(process["avoid_tags"])):
                 continue
+
+            # Step Confs
             if "in_variables" in process.keys():
                 variables = self.variables.get(process["in_variables"])
             else:
                 variables = None
+            error_tolerance = "error_tolerance" in process.keys() and process["error_tolerance"]
+
+            # Process step
             func = import_module(f"pipeline.{step_name}.{process_name}")
-            exit_vars = func.process(confs = self.confs, args = variables)
+            try:
+                exit_vars = func.process(confs = self.confs, args = variables)
+            except Exception as e:
+                if not error_tolerance:
+                    raise step_error("Step exception without errors tolerance")
+                print(e)
             if "out_variables" in process.keys():
                 variables = {process["out_variables"][x] : exit_vars[x] for x in range(len(process["out_variables"]))}
                 self.variables.store_vars(variables)
