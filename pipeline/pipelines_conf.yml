@@ -4,6 +4,7 @@ flows:
     tags:
       - default
       - all
+      - process
     steps:
       read:
         read_file:
@@ -26,7 +27,6 @@ flows:
         add_data:
           in_variables:
             - main_df
-
   complete:
     tags:
       - complete
@@ -44,6 +44,23 @@ flows:
         add_data:
           in_variables:
             - main_df
+  error_treatment:
+    tags:
+      - errors
+      - all
+    steps:
+      read:
+        read_file_with_err:
+          out_variables:
+            - main_df
+          error_tolerance:
+            False
+      process:
+        process_data_with_err:
+          in_variables:
+            - main_df
+          error_tolerance:
+            True
 
 
 confs:
