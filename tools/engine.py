@@ -28,8 +28,10 @@ class pipeline:
             self.confs["active_env"] = env
         self.variables = variables_storage()
 
-    def _make_step(self,step_name, step):
+    def _make_step(self, step_name, step, tags):
         for process_name, process in step.items():
+            if "avoid_tags" in process.keys() and tags.intersection(set(process["avoid_tags"])):
+                continue
             if "in_variables" in process.keys():
                 variables = self.variables.get(process["in_variables"])
             else:
@@ -40,9 +42,10 @@ class pipeline:
                 variables = {process["out_variables"][x] : exit_vars[x] for x in range(len(process["out_variables"]))}
                 self.variables.store_vars(variables)
 
-    def run_tag(self, tag):
+    def run_tag(self, tags):
+        tags = set(tags)
         for _,flow in self.flows.items():
-            if not tag in flow["tags"]:
+            if not tags.intersection(set(flow["tags"])):
                 continue
             for step_name, step in flow["steps"].items():
-                self._make_step(step_name, step)
+                self._make_step(step_name, step, tags)
