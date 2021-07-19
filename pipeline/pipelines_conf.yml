@@ -27,6 +27,24 @@ flows:
           in_variables:
             - main_df
 
+  complete:
+    tags:
+      - complete
+    steps:
+      read:
+        read_file:
+          out_variables:
+            - main_df
+      process:
+        process_data:
+          in_variables:
+            - main_df
+          avoid_tags:
+            - all
+        add_data:
+          in_variables:
+            - main_df
+
 
 confs:
   envs:
