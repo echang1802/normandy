@@ -1,9 +1,14 @@
 
 import sys
 import yaml
+from datetime import datetime
 from yaml.loader import SafeLoader
 from importlib import import_module
+from multiprocessing import Pool
 from tools.engine_errors import step_error
+
+def _info(title, _t):
+    print(title , 'start at:', _t, 'process time:', datetime.now() - _t)
 
 class variables_storage:
 
@@ -20,20 +25,34 @@ class variables_storage:
     def get(self, variables):
         return [self.variables[var] for var in variables]
 
+class flow:
+
+    def __init__(self, flow_data, name):
+        self.__steps__ = flow_data["steps"]
+        self.__tags__ = flow_data["tags"]
+        self.__name__ = name
+
+    def steps(self):
+        return self.__steps__.items()
+
+    def __str__(self):
+        return f"Flow: {self.__name__}"
+
 class pipeline:
 
-    def __init__(self, env):
+    def __init__(self, env, tags):
+        tags = set(tags)
         with open("pipeline/pipelines_conf.yml") as file:
             confs = yaml.load(file, Loader=SafeLoader)
-            self.flows = confs["flows"]
+            self.flows = [flow(data, flow_name) for flow_name, data in confs["flows"].items() if tags.intersection(set(data["tags"]))]
             self.confs = confs["confs"]
             self.confs["active_env"] = env
         self.variables = variables_storage()
 
-    def _make_step(self, step_name, step, tags):
+    def __take_step__(self, step_name, step):
         for process_name, process in step.items():
             # The process must be execute?
-            if "avoid_tags" in process.keys() and tags.intersection(set(process["avoid_tags"])):
+            if "avoid_tags" in process.keys() and self.tags.intersection(set(process["avoid_tags"])):
                 continue
 
             # Step Confs
@@ -55,10 +74,12 @@ class pipeline:
                 variables = {process["out_variables"][x] : exit_vars[x] for x in range(len(process["out_variables"]))}
                 self.variables.store_vars(variables)
 
-    def run_tag(self, tags):
-        tags = set(tags)
-        for _,flow in self.flows.items():
-            if not tags.intersection(set(flow["tags"])):
-                continue
-            for step_name, step in flow["steps"].items():
-                self._make_step(step_name, step, tags)
+    def __flow_runner__(self, flow):
+        _t = datetime.now()
+        for step_name, step in flow.steps():
+            self.__take_step__(step_name, step)
+        _info(flow, _t)
+
+    def start_pipeline(self):
+        with Pool(len(self.flows)) as pool:
+            pool.map(self.__flow_runner__, self.flows)
