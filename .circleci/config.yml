@@ -1,0 +1,38 @@
+version: 2.1
+
+orbs:
+  # The python orb contains a set of prepackaged CircleCI configuration you can use repeatedly in your configuration files
+  # Orb commands and jobs help you with common scripting around a language/tool
+  # so you dont have to copy and paste it everywhere.
+  # See the orb documentation here: https://circleci.com/developer/orbs/orb/circleci/python
+  python: circleci/python@1.2
+
+workflows:
+  validate_pr:
+    jobs:
+      - build-and-test
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/python:3.8
+    steps:
+      - checkout
+      - when:
+          condition:
+            equal: [ main, << pipeline.git.branch >> ]
+          steps:
+            - python/install-packages:
+                pkg-manager: pip
+            - run:
+                name: No params test
+                command: sh .circleci/no_params_test.sh
+            - run:
+                name: Multitags test
+                command: sh .circleci/multitags_test.sh
+            - run:
+                name: Complete Flow test
+                command: sh .circleci/compelte_test.sh
+            - run:
+                name: Confirmation
+                command: echo "Changes made succefully"
