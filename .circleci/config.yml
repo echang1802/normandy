@@ -32,7 +32,7 @@ jobs:
                 command: sh .circleci/multitags_test.sh
             - run:
                 name: Complete Flow test
-                command: sh .circleci/compelte_test.sh
+                command: sh .circleci/complete_test.sh
             - run:
                 name: Confirmation
                 command: echo "Changes made succefully"
