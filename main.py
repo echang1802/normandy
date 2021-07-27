@@ -1,6 +1,6 @@
 
 import click
-from tools.engine import pipeline
+from engine.pipeline import pipeline
 
 @click.command()
 @click.option("-tags", default = ["default"], help = "Flows with this tag will run", show_default = True, multiple=True)

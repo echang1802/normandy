@@ -1,17 +1,21 @@
 import pandas as pd
-from tools.engine import variables_storage
+from engine.variables_storage import variables_storage
 
-def process(pipe):
-    # Parse args
-    main_df = var_str.get("main_df")
-
+def process(pipe, log):
     # Get confs
     write_path = confs["envs"][confs["active_env"]]["write"]
+    var_str = variables_storage()
+    log.info("Configuration ready")
+
+    main_df = var_str.get("main_df").describe()
+    log.info("Data recupered")
 
     main_df = main_df.append(pd.DataFrame({
-        "id" : [6,7,8],
         "foo" : [2,2,2],
         "bar" : [9,10,11]
     }))
 
     main_df.to_csv(f"{write_path}/data_extra.csv")
+    log.info("Process ready")
+
+    return
