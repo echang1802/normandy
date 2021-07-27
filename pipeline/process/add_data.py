@@ -1,8 +1,9 @@
 import pandas as pd
+from tools.engine import variables_storage
 
-def process(confs, args):
+def process(pipe):
     # Parse args
-    main_df = args[0]
+    main_df = var_str.get("main_df")
 
     # Get confs
     write_path = confs["envs"][confs["active_env"]]["write"]
