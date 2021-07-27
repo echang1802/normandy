@@ -23,13 +23,12 @@ class variables_storage:
 
 class pipeline:
     def __init__(self, env, tags):
-        tags = set(tags)
+        self.tags = set(tags)
         with open("pipeline/pipelines_conf.yml") as file:
             confs = yaml.load(file, Loader=SafeLoader)
             self.__flows__ = [self.flow(data, flow_name, tags) for flow_name, data in confs["flows"].items() if tags.intersection(set(data["tags"]))]
             self.__confs__ = confs["confs"]
             self.__confs__["active_env"] = env
-        #self.__variables__ = variables_storage()
 
     def confs(self):
         return self.__confs__
@@ -50,8 +49,8 @@ class pipeline:
 
     def __flow_runner__(self, flow):
         _t = datetime.now()
-        for step in flow.steps():
-            self.__step_runner__(step)
+        for step_name, step in flow.steps():
+            self.__take_step__(step_name, step)
         _info(flow, _t)
 
     def start_pipeline(self):
@@ -98,12 +97,7 @@ class pipeline:
                     self.__name__ = name
                     self.__from_step__ = step_name
                     self.__from_flow__ = flow_name
-
-
-                    #self.__in_variables__ = self.__setup__(process_data, "in_variables")
-                    #self.__out_variables__ = self.__setup__(process_data, "out_variables")
                     self.__error_tolerance__ = self.__setup__(process_data, "error_tolerance")
-                    #self.__import_module__()
 
                 def __setup__(self, data, setup):
                     setups_defaults = {
@@ -115,14 +109,8 @@ class pipeline:
                         return data[setup]
                     return setups_defaults[setup]
 
-                def __import_module__(self):
-                    self.module = import_module(f"pipeline.{self.__from_step__}.{self.__name__}")
-
                 def execute(self, pipe):
                     module = import_module(f"pipeline.{self.__from_step__}.{self.__name__}")
-                    #confs = pipe.confs()
-                    #variables = pipe.variables()
-                    #nonlocal __variables__
                     try:
                         exit_vars = module.process(pipe)
                     except Exception as e:
@@ -131,3 +119,4 @@ class pipeline:
                         print(e)
                         exit_vars = ()
                     return exit_vars
+
