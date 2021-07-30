@@ -10,7 +10,7 @@ class pipeline:
         from yaml.loader import SafeLoader
 
         self.tags = set(tags)
-        with open("pipeline/pipelines_conf.yml") as file:
+        with open("pipeline/pipeline_conf.yml") as file:
             confs = load(file, Loader=SafeLoader)
             self.__flows__ = [self.flow(data, flow_name, tags) for flow_name, data in confs["flows"].items() if self.tags.intersection(set(data["tags"]))]
             self.__confs__ = confs["confs"]
@@ -71,7 +71,10 @@ class pipeline:
                 self.__type__ = "step"
                 self.__name__ = name
                 self.__from_flow__ = belong
-                self.__processes__ = [self.process(process_data, process_name, self.__name__, self.__from_flow__) for process_name, process_data in step_data.items() if (not "avoid_tags" in process_data.keys()) or (not tags.intersection(set(process_data["avoid_tags"])))]
+                if type(step_data) == dict:
+                    self.__processes__ = [self.process(process_data, process_name, self.__name__, self.__from_flow__) for process_name, process_data in step_data.items() if type(process_data) == dict (not "avoid_tags" in process_data.keys()) or (not tags.intersection(set(process_data["avoid_tags"])))]
+                else:
+                    self.__processes__ = [self.process(None, process_name, self.__name__, self.__from_flow__) for process_name in step_data]
 
             def processes(self):
                 return self.__processes__
@@ -94,11 +97,9 @@ class pipeline:
 
                 def __setup__(self, data, setup):
                     setups_defaults = {
-                        "in_variables": [],
-                        "out_vriables" : [],
                         "error_tolerance" : False
                     }
-                    if setup in data.keys():
+                    if type(data) == dict and setup in data.keys():
                         return data[setup]
                     return setups_defaults[setup]
 

@@ -1,0 +1,58 @@
+
+flows:
+  main:
+    tags:
+      - default
+      - all
+      - process
+    steps:
+      read:
+        - read_file
+      process:
+        - process_data
+      finish:
+        - prints
+  add_info:
+    tags:
+      - add_info
+      - all
+    steps:
+      read:
+        - read_file
+      process:
+        - add_data
+  complete:
+    tags:
+      - complete
+    steps:
+      read:
+        - read_file
+      process:
+        process_data:
+          avoid_tags:
+            - all
+        add_data:
+  error_treatment:
+    tags:
+      - errors
+    steps:
+      read:
+        read_file_with_err:
+          error_tolerance: False
+      process:
+        process_data_with_err:
+          error_tolerance: True
+
+
+confs:
+  envs:
+    dev:
+      read:
+        raw_dev
+      write:
+        processed_dev
+    prod:
+      read:
+        raw
+      write:
+        processed
