@@ -3,7 +3,7 @@ class pipeline:
 
     from datetime import datetime
     from multiprocessing import Pool
-    from engine.logger import logger
+    from engine.logger import main_logger, logger
 
     def __init__(self, env, tags):
         from yaml import load
@@ -20,16 +20,21 @@ class pipeline:
     def __step_runner__(self, step):
         _t = self.datetime.now()
         log = self.logger(step, self.__log_level__)
-        with self.Pool(step.processes_number()) as process_pool:
-            process_pool.map(self.__process_runner__, step.processes())
+        with self.Pool(step.processes_number()) as pool:
+            try:
+                pool.map(self.__process_runner__, step.processes())
+            except Exception as e:
+                log.error(e)
+                raise e
         log.info(f"Step succefully ended at {self.datetime.now()} - Step time: {self.datetime.now() - _t}")
 
     def __process_runner__(self, process):
         process.execute(self)
 
     def __flow_runner__(self, flow):
+
         _t = self.datetime.now()
-        log = self.logger(flow, self.__log_level__)
+        log = self.main_logger(flow, self.__log_level__)
 
         for step in flow.steps():
             try:
@@ -37,7 +42,7 @@ class pipeline:
             except Exception as e:
                 log.error(e)
                 raise e
-        log.info(f"flow succefully ended at {self.datetime.now()} - Flow time: {self.datetime.now() - _t}")
+        log.write(f"flow succefully ended at {self.datetime.now()} - Flow time: {self.datetime.now() - _t}")
 
     def start_pipeline(self):
         for fl in self.__flows__:
@@ -104,7 +109,7 @@ class pipeline:
                     from engine.logger import logger
 
                     _t = datetime.now()
-                    log = self.logger(step, self.__log_level__)
+                    log = logger(self, pipe.__log_level__)
 
                     module = import_module(f"pipeline.{self.__from_step__}.{self.__name__}")
                     try:
@@ -114,5 +119,5 @@ class pipeline:
                             raise step_error("Step exception without errors tolerance")
                         log.error(e)
 
-                    log.info(f"Process succefully ended at {self.datetime.now()} - Process time: {self.datetime.now() - _t}")
+                    log.info(f"Process succefully ended at {datetime.now()} - Process time: {datetime.now() - _t}")
                     return
