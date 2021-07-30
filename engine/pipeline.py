@@ -12,7 +12,7 @@ class pipeline:
         self.tags = set(tags)
         with open("pipeline/pipeline_conf.yml") as file:
             confs = load(file, Loader=SafeLoader)
-            self.__flows__ = [self.flow(data, flow_name, tags) for flow_name, data in confs["flows"].items() if self.tags.intersection(set(data["tags"]))]
+            self.__flows__ = [self.flow(data, flow_name, self.tags) for flow_name, data in confs["flows"].items() if self.tags.intersection(set(data["tags"]))]
             self.__confs__ = confs["confs"]
             self.__confs__["active_env"] = env
             self.__log_level__ = 0
@@ -29,7 +29,7 @@ class pipeline:
             except Exception as e:
                 log.error(e)
                 raise e
-        log.info(f"Step succefully ended at {self.datetime.now()} - Step time: {self.datetime.now() - _t}")
+        log.info(f"Step successfully ended at {self.datetime.now()} - Step time: {self.datetime.now() - _t}")
 
     def __process_runner__(self, process):
         process.execute(self)
@@ -45,7 +45,7 @@ class pipeline:
             except Exception as e:
                 log.error(e)
                 raise e
-        log.write(f"flow succefully ended at {self.datetime.now()} - Flow time: {self.datetime.now() - _t}")
+        log.write(f"flow successfully ended at {self.datetime.now()} - Flow time: {self.datetime.now() - _t}")
 
     def start_pipeline(self):
         for fl in self.__flows__:
@@ -75,7 +75,7 @@ class pipeline:
                 self.__name__ = name
                 self.__from_flow__ = belong
                 if type(step_data) == dict:
-                    self.__processes__ = [self.process(process_data, process_name, self.__name__, self.__from_flow__) for process_name, process_data in step_data.items() if type(process_data) == dict (not "avoid_tags" in process_data.keys()) or (not tags.intersection(set(process_data["avoid_tags"])))]
+                    self.__processes__ = [self.process(process_data, process_name, self.__name__, self.__from_flow__) for process_name, process_data in step_data.items() if type(process_data) == list or (not "avoid_tags" in process_data.keys()) or (not tags.intersection(set(process_data["avoid_tags"])))]
                 else:
                     self.__processes__ = [self.process(None, process_name, self.__name__, self.__from_flow__) for process_name in step_data]
 
@@ -123,5 +123,5 @@ class pipeline:
                             raise step_error("Step exception without errors tolerance")
                         log.error(e)
 
-                    log.info(f"Process succefully ended at {datetime.now()} - Process time: {datetime.now() - _t}")
+                    log.info(f"Process successfully ended at {datetime.now()} - Process time: {datetime.now() - _t}")
                     return
