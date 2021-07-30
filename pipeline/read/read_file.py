@@ -8,7 +8,7 @@ def process(pipe, log):
     log.info("Configuration ready")
 
     main_df = pd.read_csv(f"{read_path}/sample_data.csv")
-    log.info("Data readed")
+    log.info("Data read")
 
     var_str.update("main_df", main_df)
     log.info("Data stored")

@@ -32,6 +32,7 @@ flows:
           avoid_tags:
             - all
         add_data:
+          - ignore
   error_treatment:
     tags:
       - errors
