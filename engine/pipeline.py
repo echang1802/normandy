@@ -17,6 +17,9 @@ class pipeline:
             self.__confs__["active_env"] = env
             self.__log_level__ = 0
 
+    def get_env_confs(self):
+        return self.__confs__["envs"][self.__confs__["active_env"]]
+
     def __step_runner__(self, step):
         _t = self.datetime.now()
         log = self.logger(step, self.__log_level__)

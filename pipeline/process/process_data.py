@@ -3,7 +3,7 @@ from engine.variables_storage import variables_storage
 
 def process(pipe, log):
     # Get confs
-    write_path = pipe.__confs__["envs"][pipe.__confs__["active_env"]]["write"]
+    write_path = pipe.get_env_confs()["write"]
     var_str = variables_storage()
     log.info("Configuration ready")
 
