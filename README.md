@@ -133,13 +133,49 @@ my_flow:
         error_tolerance: True
 ```
 
+### Environment Configuration
+
+You are free to make all configurations you need over the environment section of the configuration file, just must use the keyword "envs", by example  if you want to specify a reading and writing path of each environments do as follow:
+
+```
+confs:
+  envs:
+    dev:
+      read:
+        raw_dev
+      write:
+        processed_dev
+    prod:
+      read:
+        raw
+      write:
+        processed
+```
+
 ### Writing a process
 
-AS mentioned before, each process listed on the `pipeline_conf.yml` file is making a referece to a python file inside the correspondent step folder, whatever, this file must have defined inside it a process function which need to parameter `pipe` and `log`.
+AS mentioned before, each process listed on the `pipeline_conf.yml` file is making a reference to a python file inside the correspondent step folder, whatever, this file must have defined inside it a process function which need to parameter `pipe` and `log`.
 
 Pipe is a Normandy pipeline object,  at the stage is only function is to use the environment configurations defined on `pipeline_conf.yml` , to get this use the `get_env_confs()` method, which returns a dictionary with the mentioned configurations.
 
 log is a Normandy logger object, the main function is to easily log your code.
+
+Process snippet:
+
+```
+from engine.variables_storage import variables_storage
+
+def process(pipe, log):
+    # Configurations
+    env_confs = pipe.get_confs()["read"]
+    var_str = variables_storage()
+    log.info("Configuration ready")
+
+    # Code here your process
+    # ...
+
+    return
+```
 
 #### The Normandy logger
 
