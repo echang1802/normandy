@@ -6,8 +6,7 @@ setup(
     description='A data pipeline framework.',
     entry_points={
         'console_scripts': [
-            'normandy=normandy:run',
-            'normandy_create=normandy:start_project'
+            'normandy=normandy:run'
         ]
     }
 )
