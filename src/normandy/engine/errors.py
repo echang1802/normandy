@@ -13,3 +13,9 @@ class step_error(Error):
 
     def __init__(self, message):
         self.message = message
+
+class excecution_error(Error):
+    # Step exception without errors tolerance
+
+    def __init__(self, message):
+        self.message = message
