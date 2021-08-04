@@ -3,7 +3,7 @@ class pipeline:
 
     from datetime import datetime
     from multiprocessing import Pool
-    from engine.logger import main_logger, logger
+    from normandy.engine.logger import main_logger, logger
 
     def __init__(self, env, tags):
         from yaml import load
@@ -16,6 +16,12 @@ class pipeline:
             self.__confs__ = confs["confs"]
             self.__confs__["active_env"] = env
             self.__log_level__ = 0
+
+    def set_path(self):
+        import os
+
+        os.chdir(self.__confs__["path"])
+        return
 
     def get_env_confs(self):
         return self.__confs__["envs"][self.__confs__["active_env"]]
@@ -108,14 +114,16 @@ class pipeline:
 
                 def execute(self, pipe):
                     from datetime import datetime
-                    from importlib import import_module
-                    from engine.errors import step_error
-                    from engine.logger import logger
+                    from importlib.util import spec_from_file_location, module_from_spec
+                    from normandy.engine.errors import step_error
+                    from normandy.engine.logger import logger
 
                     _t = datetime.now()
                     log = logger(self, pipe.__log_level__)
 
-                    module = import_module(f"pipeline.{self.__from_step__}.{self.__name__}")
+                    spec = spec_from_file_location(f"{self.__from_step__}.{self.__name__}", f"{pipe.__confs__['path']}/pipeline/{self.__from_step__}/{self.__name__}.py")
+                    module = module_from_spec(spec)
+                    spec.loader.exec_module(module)
                     try:
                         exit_vars = module.process(pipe, log)
                     except Exception as e:

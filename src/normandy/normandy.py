@@ -2,8 +2,8 @@
 import os
 import yaml
 import click
-from engine.pipeline import pipeline
-from engine.errors import excecution_error
+from normandy.engine.pipeline import pipeline
+from normandy.engine.errors import excecution_error
 
 def rur_pipe(tags, env):
     pipe = pipeline(env = env, tags = tags)

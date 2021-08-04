@@ -22,7 +22,7 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts': [
-            'normandy=normandy:run'
+            'normandy = normandy.normandy:run'
         ]
     }
 )
