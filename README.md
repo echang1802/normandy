@@ -5,13 +5,17 @@ by [Epsilon DataLabs](https://echang1802.github.io/epsilon.github.io)
 
 ----------------------------------------------------------------
 
-Normandy is a data treatment framework, which main objective is standardizing your team code and provide a data treatment methodology flexible to your team needs.
+Normandy is a python framework for data pipelines, which main objective is standardizing your team code and provide a data treatment methodology flexible to your team needs.
 
 ----------------------------------------------------------------
 
-## Implementing Normandy
+## Installing Normandy
 
-We are currently working in make Normandy a fully installable package, meanwhile, you may implement Normandy _forking_ this repository and changing the _steps_ and _pipeline_ configuration files.
+Normandy is available via PIP using:
+
+```
+pip install normandy
+```
 
 ----------------------------------------------------------------
 
@@ -39,6 +43,18 @@ So, Normandy let you:
 
 ----------------------------------------------------------------
 
+## Creating a Normandy project
+
+Normandy offer a easy files structure, nevertheless, you may create it using the `create project` command with the path where to create the project.
+
+```
+normandy --create-project -file-path write/project/path
+```
+
+If the given path do not exist Normandy will create it.
+
+This command will also create a template of the `pipeline_conf.yml` file used to configure Normandy behavior.
+
 ## How to use Normandy
 
 The Normandy behavior is configured in the `pipeline_conf.yml` file, it has two sections:
@@ -65,8 +81,7 @@ A configured flow, should looks like:
 my_flow:
   tags:
     - default
-    - main_flow
-    - my_flow
+    - sr1
   steps:
     read:
       - read_file
@@ -114,6 +129,7 @@ A complete example:
 my_flow:
   tags:
     - default
+    - salarians
   steps:
     read:
       - read_file
@@ -121,7 +137,7 @@ my_flow:
     process:
       main_processing:
         avoid_tags:
-          - weekend
+          - hammerhead
       side_processing:
         avoid_tags:
           - Shepard
@@ -133,12 +149,15 @@ my_flow:
         error_tolerance: True
 ```
 
-### Environment Configuration
+### Pipeline Configuration
+
+The main objective of this section if to configure your environment settings, but also is important to declare the project full path.
 
 You are free to make all configurations you need over the environment section of the configuration file, just must use the keyword "envs", by example  if you want to specify a reading and writing path of each environments do as follow:
 
 ```
 confs:
+  path: your/project/path
   envs:
     dev:
       read:
@@ -163,7 +182,7 @@ log is a Normandy logger object, the main function is to easily log your code.
 Process snippet:
 
 ```
-from engine.variables_storage import variables_storage
+from normandy.engine.variables_storage import variables_storage
 
 def process(pipe, log):
     # Configurations
@@ -207,7 +226,7 @@ A usage example:
 
 ```
 import pandas as pd
-from engine.variables_storage import variables_storage
+from normandy.engine.variables_storage import variables_storage
 
 def process(pipe, log):
     # Get confs
@@ -226,22 +245,22 @@ def process(pipe, log):
 
 ### How to run it
 
-The Normandy CLI interface is still under construction, but you may run your pipeline with the command:
+To run the Normandy pipeline use the command `run-pipeline` as below from the project directory:
+
+```
+normandy --run-pipeline
+```
+
+With this command the default flow would run on the defined _dev_ environment.
+
+To specify tags you may use the tag parameter:
 
  ```
-python main.py
- ```
-
-With this command the default flow would run on the defined dev environment.
-
-To specify tags you may use the tag parameter as follow:
-
- ```
-python main.py -tags default -tags weekend
+normandy --run-pipeline -tags my_tag -tags sr2
  ```
 
  Finally to specify the environment use the parameter env:
 
  ```
-python main.py -env prod
+normandy --run-pipeline -env prod
  ```
