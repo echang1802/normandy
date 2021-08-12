@@ -44,7 +44,6 @@ class pipeline:
 
     def __process_runner__(self, process):
         # Run the selected process
-        print(process)
         process.execute(self)
 
     def __flow_runner__(self, flow):

@@ -20,21 +20,18 @@ def create_framework(project_path):
 
     # Create pieline folder and basic confs
     os.mkdir("pipeline")
-    os.mkdir("pipeline/extract")
-    os.mkdir("pipeline/transform")
-    os.mkdir("pipeline/load")
+    os.mkdir("pipeline/step_1")
     basic_confs = {
         "flows" : {
             "my-flow" : {
                 "tags" : ["deafult"],
-                "steps" : {
-                    "extract" : ["extract_data"],
-                    "transform" : ["transform_data"],
-                    "load" : ["load_data"]
+                "step_1" : {
+                    "steps" : ["process_1", "process_2"],
                 }
             }
         },
         "confs" : {
+            "path": project_path,
             "envs" : {
                 "dev" : "dev confs",
                 "prod" : "prod confs",
