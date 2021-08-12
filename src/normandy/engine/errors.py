@@ -8,14 +8,20 @@ class test_error(Error):
     def __init__(self, message):
         self.message = message
 
-class step_error(Error):
-    # Step exception without errors tolerance
+class process_error(Error):
+    # Process exception without errors tolerance
 
     def __init__(self, message):
         self.message = message
 
 class excecution_error(Error):
-    # Step exception without errors tolerance
+    # Fail execution on any level
+
+    def __init__(self, message):
+        self.message = message
+
+class definition_error(Error):
+    # Wrong definition of procees, steps or flow
 
     def __init__(self, message):
         self.message = message
