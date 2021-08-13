@@ -5,8 +5,8 @@ import click
 from normandy.engine.pipeline import pipeline
 from normandy.engine.errors import excecution_error
 
-def rur_pipe(tags, env):
-    pipe = pipeline(env = env, tags = tags)
+def rur_pipe(tags, env, global_params):
+    pipe = pipeline(env = env, tags = tags, global_params = global_params)
     pipe.start_pipeline()
 
 def create_framework(project_path):
@@ -55,11 +55,12 @@ def create_framework(project_path):
 @click.option("--run-pipeline", "run_pipeline", is_flag = True, help = "Execute the pipeline.")
 @click.option("-tags", default = ["default"], help = "Flows with this tag will run.", show_default = True, multiple=True)
 @click.option("-env", default = "dev", help = "Enviroment to run.", show_default=True)
-def run(create_project, project_path, run_pipeline, tags, env):
+@click.option("-param", default = None, help = "Set global parameters.", show_default=True, multiple=True, nargs=2)
+def run(create_project, project_path, run_pipeline, tags, env, param):
     if create_project and run_pipeline:
         raise excecution_error("Cannot use create-project and run-pipeline at the same time")
     if run_pipeline:
-        rur_pipe(tags, env)
+        rur_pipe(tags, env, param)
     elif create_project:
         if project_path is None:
             raise excecution_error("Project path must be specify")
