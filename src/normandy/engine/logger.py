@@ -4,12 +4,18 @@ class main_logger:
     start_at = None
     flow = ""
     __main_filename__ = ""
+    __levels__ = {
+        "info" : 0,
+        "warnings" : 1,
+        "errors" : 2
+    }
 
-    def __init__(self, module, level = 0):
+    def __init__(self, module, level = "info"):
 
         from pathlib import Path
         from _pickle import dump
 
+        level = self.__levels__[level]
         # Set level of logs
         self.__info_lv__ = level >= 0
         self.__warning_lv__ = level >= 1
@@ -41,14 +47,20 @@ class logger:
 
     from datetime import datetime
     from _pickle import load
+    __levels__ = {
+        "info" : 0,
+        "warnings" : 1,
+        "errors" : 2
+    }
 
-    def __init__(self, module, level = 0):
+    def __init__(self, module, level = "info"):
 
         from pathlib import Path
 
         # Set level of logs
-        self.__info_lv__ = level >= 0
-        self.__warning_lv__ = level >= 1
+        level = self.__levels__[level]
+        self.__info_lv__ = level == 0
+        self.__warning_lv__ = level <= 1
 
         # Create format and file management
         with open("temp/log_conf", "rb") as file:

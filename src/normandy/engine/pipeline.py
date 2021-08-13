@@ -6,7 +6,7 @@ class pipeline:
     from multiprocessing import Pool
     from normandy.engine.logger import main_logger, logger
 
-    def __init__(self, env, tags, global_params):
+    def __init__(self, env, tags, global_params, log_level, threads):
         from yaml import load
         from yaml.loader import SafeLoader
 
@@ -20,7 +20,18 @@ class pipeline:
             # Read the project configurations
             self.__confs__ = confs["confs"]
             self.__confs__["active_env"] = env
-            self.__log_level__ = 0
+            if log_level != None:
+                self.__log_level__ = log_level
+            elif "log_level" in confs["confs"].keys():
+                self.__log_level__ = confs["confs"]["log_level"]
+            else:
+                self.__log_level__ = "info"
+            if threads != None:
+                self.__threads__ = threads
+            elif "threads" in confs["confs"].keys():
+                self.__threads__ = confs["confs"]["threads"]
+            else:
+                self.__threads__ = 8
 
     def get_path(self):
         # Return the project path
@@ -34,7 +45,7 @@ class pipeline:
         # Run each step using parallel processing over each process.
         _t = self.datetime.now()
         log = self.logger(step, self.__log_level__)
-        with self.Pool(step.processes_number()) as pool:
+        with self.Pool(min(step.processes_number(), self.__threads__)) as pool:
             try:
                 pool.map(self.__process_runner__, step.processes())
             except Exception as e:
