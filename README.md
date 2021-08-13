@@ -1,6 +1,6 @@
 # Normandy
 
-v0.2.2
+v0.2.3
 by [Epsilon DataLabs](https://echang1802.github.io/epsilon.github.io)
 
 ----------------------------------------------------------------
@@ -41,6 +41,8 @@ So, Normandy let you:
 
 * A clean and understandable data pipeline structure.
 
+* Easily share parameters between processes.
+
 ----------------------------------------------------------------
 
 ## Creating a Normandy project
@@ -75,6 +77,8 @@ At least one flow should have the tag _default_, this flow will run when no tags
 
 To set the steps is enough to list then with the process they should run.
 
+Here may be defined global parameters as well, this parameters are available at all process.
+
 A configured flow, should looks like:
 
 ```
@@ -82,6 +86,8 @@ my_flow:
   tags:
     - default
     - sr1
+  params:
+    version: Andromeda
   steps:
     read:
       - read_file
@@ -121,7 +127,7 @@ You may define a process on the `pipeline_conf.yml` file on two ways:
 
   * error_tolerance: If your process may fail and that does not affect the rest of the data flow, you may activate this feature, so, in case the process fail, the flow would still run.
 
-  * params: If your process need some extra parameters you may listed here as a dictionary, then inside the process you can invoke them as `params["params_name"]`.
+  * params: If your process need some extra parameters you may listed here as a dictionary, then inside the process you can invoke them as `params["params_name"]`. If the same parameter is defined globally and at a process the last one would be chosen.
 
   * iter_param: this help you if you need to run a process several time but with a different value of a parameters, you must past the name and values to take. Note: this would run as several different processes of the same steps, this mean they will run in parallel.
 
@@ -134,6 +140,8 @@ my_flow:
   tags:
     - default
     - salarians
+  params:
+    version: Andromeda
   steps:
     read:
       - read_file
@@ -145,6 +153,7 @@ my_flow:
         params:
           limit: 100
           flag: True
+          version: Trilogy
       side_processing:
         avoid_tags:
           - Shepard
@@ -166,29 +175,39 @@ my_flow:
 
 ### Pipeline Configuration
 
-The main objective of this section if to configure your environment settings, but also is important to declare the project full path.
+The main objective of this section is to configure your pipeline settings, like environment distinctions.
 
-You are free to make all configurations you need over the environment section of the configuration file, just must use the keyword "envs", by example  if you want to specify a reading and writing path of each environments do as follow:
+You are free to make all configurations you need over the environment section of the configuration file, just must use the keyword "envs", in the example below the read and write folder are distinguished based on the environment.
+
+Other settings are:
+
+* path: This is the project path, and must be defined.
+
+* threads: Maximum number of threads allowed to run simultaneously, this is used in case a step have several processes, the default value is 8.  
+
+* log_level: Level of detail in log files, may be info, warnings or erros, the default value is info.
 
 ```
 confs:
   path: your/project/path
+  threads: 4
+  log_level: errors
   envs:
     dev:
       read:
-        raw_dev
+        data/dev/raw/
       write:
-        processed_dev
+        data/dev/processed/
     prod:
       read:
-        raw
+        data/prod/raw/
       write:
-        processed
+        data/prod/processed
 ```
 
 ### Writing a process
 
-AS mentioned before, each process listed on the `pipeline_conf.yml` file is making a reference to a python file inside the correspondent step folder, whatever, this file must have defined inside it a process function which need to parameter `pipe` and `log`.
+As mentioned before, each process listed on the `pipeline_conf.yml` file is making a reference to a python file inside the correspondent step folder, whatever, this file must have defined inside it a process function which need to parameter `pipe` and `log`.
 
 Pipe is a Normandy pipeline object,  at the stage is only function is to use the environment configurations defined on `pipeline_conf.yml` , to get this use the `get_env_confs()` method, which returns a dictionary with the mentioned configurations.
 
@@ -201,7 +220,7 @@ from normandy.engine.variables_storage import variables_storage
 
 def process(pipe, log, params):
     # Configurations
-    env_confs = pipe.get_confs()["read"]
+    env_confs = pipe.get_confs()
     var_str = variables_storage()
     log.info("Configuration ready")
 
@@ -247,11 +266,15 @@ from normandy.engine.variables_storage import variables_storage
 
 def process(pipe, log, params):
     # Get confs
-    read_path = pipe.get_env_confs()["read"]
+    read_path = pipe.get_env_confs()
     var_str = variables_storage()
     log.info("Configuration ready")
 
-    main_df = pd.read_csv(f"{read_path}/{params["filename"]}.csv")
+    try:
+      main_df = pd.read_csv(f"{read_path}{params["filename"]}.csv")
+    except Exception as e:
+      log.error(e)
+      raise e
     log.info("Data read")
 
     var_str.update("main_df", main_df)
@@ -268,16 +291,22 @@ To run the Normandy pipeline use the command `run-pipeline` as below from the pr
 normandy --run-pipeline
 ```
 
-With this command the default flow would run on the defined _dev_ environment.
+With this command the _default_ flow would run on the defined _dev_ environment.
 
-To specify tags you may use the tag parameter:
+The `run-pipeline` has several arguments as:
+
+* tags: Specify any number of tags.
+
+* env: Specify the environment to run on.
+
+* params: Used to overwrite or define global parameters on all running flows.
+
+* log level: Overwrite the log_level setting.
+
+* threads: Overwrite the maximum number of threads setting.
+
+A complete example:
 
  ```
-normandy --run-pipeline -tags my_tag -tags sr2
- ```
-
- Finally to specify the environment use the parameter env:
-
- ```
-normandy --run-pipeline -env prod
+normandy --run-pipeline -tags my_tag -tags sr2 -env prod -param version Trilogy -log-level warnings -threads 16
  ```
