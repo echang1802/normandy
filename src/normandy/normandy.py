@@ -5,8 +5,8 @@ import click
 from normandy.engine.pipeline import pipeline
 from normandy.engine.errors import excecution_error
 
-def rur_pipe(tags, env):
-    pipe = pipeline(env = env, tags = tags)
+def rur_pipe(tags, env, global_params, log_level, threads):
+    pipe = pipeline(env = env, tags = tags, global_params = global_params, log_level = log_level, threads = threads)
     pipe.start_pipeline()
 
 def create_framework(project_path):
@@ -20,21 +20,18 @@ def create_framework(project_path):
 
     # Create pieline folder and basic confs
     os.mkdir("pipeline")
-    os.mkdir("pipeline/extract")
-    os.mkdir("pipeline/transform")
-    os.mkdir("pipeline/load")
+    os.mkdir("pipeline/step_1")
     basic_confs = {
         "flows" : {
             "my-flow" : {
                 "tags" : ["deafult"],
-                "steps" : {
-                    "extract" : ["extract_data"],
-                    "transform" : ["transform_data"],
-                    "load" : ["load_data"]
+                "step_1" : {
+                    "steps" : ["process_1", "process_2"],
                 }
             }
         },
         "confs" : {
+            "path": project_path,
             "envs" : {
                 "dev" : "dev confs",
                 "prod" : "prod confs",
@@ -58,11 +55,14 @@ def create_framework(project_path):
 @click.option("--run-pipeline", "run_pipeline", is_flag = True, help = "Execute the pipeline.")
 @click.option("-tags", default = ["default"], help = "Flows with this tag will run.", show_default = True, multiple=True)
 @click.option("-env", default = "dev", help = "Enviroment to run.", show_default=True)
-def run(create_project, project_path, run_pipeline, tags, env):
+@click.option("-param", default = None, help = "Set global parameters.", show_default=True, multiple=True, nargs=2)
+@click.option("-log-level", "log_level", default = None, help = "Overwrite log level configuration.")
+@click.option("-threads", default = None, help = "Overwrite max thread number configuration.")
+def run(create_project, project_path, run_pipeline, tags, env, param, log_level, threads):
     if create_project and run_pipeline:
         raise excecution_error("Cannot use create-project and run-pipeline at the same time")
     if run_pipeline:
-        rur_pipe(tags, env)
+        rur_pipe(tags, env, param, log_level, threads)
     elif create_project:
         if project_path is None:
             raise excecution_error("Project path must be specify")

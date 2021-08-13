@@ -1,6 +1,6 @@
 # Normandy
 
-v0.2
+v0.2.2
 by [Epsilon DataLabs](https://echang1802.github.io/epsilon.github.io)
 
 ----------------------------------------------------------------
@@ -121,6 +121,10 @@ You may define a process on the `pipeline_conf.yml` file on two ways:
 
   * error_tolerance: If your process may fail and that does not affect the rest of the data flow, you may activate this feature, so, in case the process fail, the flow would still run.
 
+  * params: If your process need some extra parameters you may listed here as a dictionary, then inside the process you can invoke them as `params["params_name"]`.
+
+  * iter_param: this help you if you need to run a process several time but with a different value of a parameters, you must past the name and values to take. Note: this would run as several different processes of the same steps, this mean they will run in parallel.
+
 Note that if you want to use one of the special setups on one process of a step, you must specify all others process as a dictionary too, even if in one of the processes no special setup is used, on this case the setup `ignore` is used.
 
 A complete example:
@@ -138,10 +142,21 @@ my_flow:
       main_processing:
         avoid_tags:
           - hammerhead
+        params:
+          limit: 100
+          flag: True
       side_processing:
         avoid_tags:
           - Shepard
         error_tolerance: True
+        iter_param:
+          name: locations
+          values:
+            - Thessia
+            - SurKesh
+            - Rannoch
+            - Tuchanka
+            - Palaven
     finish:
       write_data:
         - ignore
@@ -184,13 +199,15 @@ Process snippet:
 ```
 from normandy.engine.variables_storage import variables_storage
 
-def process(pipe, log):
+def process(pipe, log, params):
     # Configurations
     env_confs = pipe.get_confs()["read"]
     var_str = variables_storage()
     log.info("Configuration ready")
 
     # Code here your process
+    # Use params as any dict ej:
+    # flag = params["flag"]
     # ...
 
     return
@@ -228,13 +245,13 @@ A usage example:
 import pandas as pd
 from normandy.engine.variables_storage import variables_storage
 
-def process(pipe, log):
+def process(pipe, log, params):
     # Get confs
     read_path = pipe.get_env_confs()["read"]
     var_str = variables_storage()
     log.info("Configuration ready")
 
-    main_df = pd.read_csv(f"{read_path}/sample_data.csv")
+    main_df = pd.read_csv(f"{read_path}/{params["filename"]}.csv")
     log.info("Data read")
 
     var_str.update("main_df", main_df)
