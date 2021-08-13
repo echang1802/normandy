@@ -70,8 +70,9 @@ class flow:
     def __init__(self, flow_data, name, tags):
         self.__type__ = "flow"
         self.__tags__ = flow_data["tags"]
+        self.__params__ = flow_data["params"] if "params" in flow_data.keys() else None
         self.__name__ = name
-        self.__steps__ = [step(data, step_name, self.__name__, tags) for step_name, data in flow_data["steps"].items()]
+        self.__steps__ = [step(data, step_name, self.__name__, tags, self.__params__) for step_name, data in flow_data["steps"].items()]
 
     def steps(self):
         return self.__steps__
@@ -84,7 +85,7 @@ class flow:
 
 class step:
 
-    def __init__(self, step_data, name, belong, tags):
+    def __init__(self, step_data, name, belong, tags, global_params):
 
         from normandy.engine.errors import definition_error
 
@@ -93,21 +94,30 @@ class step:
         self.__from_flow__ = belong
         try:
             if type(step_data) == dict:
-                self.__parse_processes__(step_data, tags)
+                self.__parse_processes__(step_data, tags, global_params)
             else:
-                self.__processes__ = [process(None, process_name, self.__name__, self.__from_flow__) for process_name in step_data]
+                process_data = {"params": global_params}
+                self.__processes__ = [process(process_data, process_name, self.__name__, self.__from_flow__) for process_name in step_data]
         except Exception as e:
             raise definition_error(f"Bad process definition: {e}")
 
-    def __parse_processes__(self, step_data, tags):
+    def __parse_processes__(self, step_data, tags, global_params):
         self.__processes__ = []
         for process_name, process_data in step_data.items():
             if type(process_data) == dict and "avoid_tags" in process_data.keys() and tags.intersection(set(process_data["avoid_tags"])):
                 continue
+            # set global params
+            if not "params" in process_data.keys():
+                process_data["params"] = global_params
+            elif not global_params == None:
+                for param in global_params.keys():
+                    if param in process_data["params"]:
+                        continue
+                    process_data["params"][param] = global_params[param]
+
             if type(process_data) == dict and "iter_param" in process_data.keys():
                 param_name = process_data["iter_param"]["name"]
-                if not "params" in process_data.keys():
-                    process_data["params"] = {}
+
                 for param_value in process_data["iter_param"]["values"]:
                     process_data["params"] = process_data["params"].copy()
                     process_data["params"][param_name] = param_value
