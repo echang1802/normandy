@@ -20,7 +20,8 @@ class pipeline:
             # Read the project configurations
             self.__confs__ = confs["confs"]
             self.__confs__["active_env"] = env
-            self.__log_level__ = 0
+            self.__log_level__ = confs["confs"]["log_level"] if "log_level" in confs["confs"].keys() else "info"
+            self.__threads__ = confs["confs"]["threads"] if "threads" in confs["confs"].keys() else 8
 
     def get_path(self):
         # Return the project path
@@ -34,7 +35,7 @@ class pipeline:
         # Run each step using parallel processing over each process.
         _t = self.datetime.now()
         log = self.logger(step, self.__log_level__)
-        with self.Pool(step.processes_number()) as pool:
+        with self.Pool(min(step.processes_number(), self.__threads__)) as pool:
             try:
                 pool.map(self.__process_runner__, step.processes())
             except Exception as e:
