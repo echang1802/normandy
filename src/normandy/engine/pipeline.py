@@ -6,7 +6,7 @@ class pipeline:
     from multiprocessing import Pool
     from normandy.engine.logger import main_logger, logger
 
-    def __init__(self, env, tags):
+    def __init__(self, env, tags, global_params):
         from yaml import load
         from yaml.loader import SafeLoader
 
@@ -15,7 +15,7 @@ class pipeline:
             confs = load(file, Loader=SafeLoader)
 
             # Define flows with the givens tags
-            self.__flows__ = [flow(data, flow_name, self.tags) for flow_name, data in confs["flows"].items() if self.tags.intersection(set(data["tags"]))]
+            self.__flows__ = [flow(data, flow_name, self.tags, global_params) for flow_name, data in confs["flows"].items() if self.tags.intersection(set(data["tags"]))]
 
             # Read the project configurations
             self.__confs__ = confs["confs"]
@@ -67,10 +67,18 @@ class pipeline:
 
 class flow:
 
-    def __init__(self, flow_data, name, tags):
+    def __init__(self, flow_data, name, tags, global_params):
         self.__type__ = "flow"
         self.__tags__ = flow_data["tags"]
-        self.__params__ = flow_data["params"] if "params" in flow_data.keys() else None
+        if global_params == None:
+            self.__params__ = flow_data["params"] if "params" in flow_data.keys() else None
+        else:
+            if not "params" in flow_data.keys():
+                flow_data["params"] = {}
+            for param_name, param_value in global_params:
+                flow_data["params"][param_name] = param_value
+            self.__params__ = flow_data["params"]
+
         self.__name__ = name
         self.__steps__ = [step(data, step_name, self.__name__, tags, self.__params__) for step_name, data in flow_data["steps"].items()]
 
