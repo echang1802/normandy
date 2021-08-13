@@ -6,7 +6,7 @@ class pipeline:
     from multiprocessing import Pool
     from normandy.engine.logger import main_logger, logger
 
-    def __init__(self, env, tags, global_params):
+    def __init__(self, env, tags, global_params, log_level, threads):
         from yaml import load
         from yaml.loader import SafeLoader
 
@@ -20,8 +20,18 @@ class pipeline:
             # Read the project configurations
             self.__confs__ = confs["confs"]
             self.__confs__["active_env"] = env
-            self.__log_level__ = confs["confs"]["log_level"] if "log_level" in confs["confs"].keys() else "info"
-            self.__threads__ = confs["confs"]["threads"] if "threads" in confs["confs"].keys() else 8
+            if log_level != None:
+                self.__log_level__ = log_level
+            elif "log_level" in confs["confs"].keys():
+                self.__log_level__ = confs["confs"]["log_level"]
+            else:
+                self.__log_level__ = "info"
+            if threads != None:
+                self.__threads__ = threads
+            elif "threads" in confs["confs"].keys():
+                self.__threads__ = confs["confs"]["threads"]
+            else:
+                self.__threads__ = 8
 
     def get_path(self):
         # Return the project path

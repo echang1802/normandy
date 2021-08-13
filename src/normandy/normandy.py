@@ -5,8 +5,8 @@ import click
 from normandy.engine.pipeline import pipeline
 from normandy.engine.errors import excecution_error
 
-def rur_pipe(tags, env, global_params):
-    pipe = pipeline(env = env, tags = tags, global_params = global_params)
+def rur_pipe(tags, env, global_params, log_level, threads):
+    pipe = pipeline(env = env, tags = tags, global_params = global_params, log_level = log_level, threads = threads)
     pipe.start_pipeline()
 
 def create_framework(project_path):
@@ -56,11 +56,13 @@ def create_framework(project_path):
 @click.option("-tags", default = ["default"], help = "Flows with this tag will run.", show_default = True, multiple=True)
 @click.option("-env", default = "dev", help = "Enviroment to run.", show_default=True)
 @click.option("-param", default = None, help = "Set global parameters.", show_default=True, multiple=True, nargs=2)
-def run(create_project, project_path, run_pipeline, tags, env, param):
+@click.option("-log-level", "log_level", default = None, help = "Overwrite log level configuration.")
+@click.option("-threads", default = None, help = "Overwrite max thread number configuration.")
+def run(create_project, project_path, run_pipeline, tags, env, param, log_level, threads):
     if create_project and run_pipeline:
         raise excecution_error("Cannot use create-project and run-pipeline at the same time")
     if run_pipeline:
-        rur_pipe(tags, env, param)
+        rur_pipe(tags, env, param, log_level, threads)
     elif create_project:
         if project_path is None:
             raise excecution_error("Project path must be specify")
