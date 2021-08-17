@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name='normandy',
-    version='0.2',
+    version='0.2.3',
     author='Eloy Chang',
     author_email="echang.epsilondl@gmail.com",
     description='A data pipeline framework.',
