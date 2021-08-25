@@ -1,6 +1,6 @@
 # Normandy
 
-v0.2.3
+v0.3
 by [Epsilon DataLabs](https://echang1802.github.io/epsilon.github.io)
 
 ----------------------------------------------------------------
@@ -266,7 +266,7 @@ from normandy.engine.variables_storage import variables_storage
 
 def process(pipe, log, params):
     # Get confs
-    read_path = pipe.get_env_confs()
+    read_path = pipe.get_env_confs()["read_path"]
     var_str = variables_storage()
     log.info("Configuration ready")
 
@@ -279,6 +279,41 @@ def process(pipe, log, params):
 
     var_str.update("main_df", main_df)
     log.info("Data stored")
+
+    return
+```
+
+#### The Normandy Modules Importer
+
+In case user defined modules are needed, they can be loaded using the `modules_importer` class, this class have the `load_module` method, which load the full selected module inside the instance, it's important to take into account that each instance of the class may have just one module loaded at a time.
+
+The functions should be on the `tools` folder on the root project directory.
+
+A full project directory should looks like:
+- project_name/
+  - logs/
+  - pipeline/
+    - my_first_step/
+      - my_process_1.py
+      - my_process_2.py
+    - my_second_step/
+      - my_process3.py
+      - my_process4.py
+      - my_process5.py
+    - pipeline_conf.yml
+  - temp/
+  - tools/
+    - my_functions.py
+
+If a function named `my_function` is defined on `my_functions.py` file it can be use following this example:
+
+```
+from normandy.engine.tools import modules_importer
+
+def process(pipe, log, params):
+
+    my_module = modules_importer(pipe).load_module("my_functions")
+    my_module.module.my_function()
 
     return
 ```
