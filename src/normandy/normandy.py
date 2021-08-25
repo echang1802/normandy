@@ -44,6 +44,7 @@ def create_framework(project_path):
     # Create extra folders
     os.mkdir("logs")
     os.mkdir("temp")
+    os.mkdir("tools")
 
     os.chdir(actual_path)
     print("Normandy folder structure created")
